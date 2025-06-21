@@ -15,6 +15,10 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.apppiantina.model.GardenModel;
+import com.example.apppiantina.model.MoistureSensor;
+import com.example.apppiantina.model.Piantina;
+
 public class MainActivity extends AppCompatActivity {
 
     private ProgressBar soilProgress;
@@ -47,6 +51,10 @@ public class MainActivity extends AppCompatActivity {
         int savedThreshold = prefs.getInt("threshold", 20);
         thresholdSeekBar.setProgress(savedThreshold);
 
+        // Moisture
+        waterMoistureLevel.setText("%");
+
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Name updater event
@@ -76,17 +84,25 @@ public class MainActivity extends AppCompatActivity {
                 editor.apply();
                 Toast.makeText(MainActivity.this, "Soglia salvata: " + newThreshold + "%", Toast.LENGTH_SHORT).show();
 
-                waterMoistureLevel.setText("");
+                waterMoistureLevel.setText("%");
             }
         });
+
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        Piantina p=new Piantina("Mia pinatina");
+        GardenModel.getInstance().aggiungiPiantina(p);
+
+        UdpListener u = new UdpListener(this.getApplicationContext());
+        u.run();
     }
 
     private void simulateHydration() {
         // Simula un valore ricevuto (es. 65%)
         int hydrationValue = 65;
         soilProgress.setProgress(hydrationValue);
+        waterMoistureLevel.setText(hydrationValue+"%");
+
     }
 
     @Override
