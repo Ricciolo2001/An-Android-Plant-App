@@ -2,6 +2,9 @@ package com.example.apppiantina;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -41,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Persistency on device
-        SharedPreferences prefs= getSharedPreferences("PlantPrefs", MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("PlantPrefs", MODE_PRIVATE);
 
         // Loads name
         String savedName = prefs.getString("plantName", "Plant Name");
@@ -52,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         thresholdSeekBar.setProgress(savedThreshold);
 
         // Moisture
+        prefs.getInt("moisture", 20);
         waterMoistureLevel.setText("%");
 
 
@@ -74,7 +78,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) { }
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
@@ -88,20 +93,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        Piantina p=new Piantina("Mia pinatina");
+        Piantina p = new Piantina("Mia pinatina");
         GardenModel.getInstance().aggiungiPiantina(p);
 
-        UdpListener u = new UdpListener(this.getApplicationContext());
+        UdpListener u = new UdpListener(handler);
         u.run();
+
+        // Chiudi gli occhi per un solo secondo e immagina di aver usato azure
+
+
     }
 
     private void simulateHydration() {
         // Simula un valore ricevuto (es. 65%)
         int hydrationValue = 65;
         soilProgress.setProgress(hydrationValue);
-        waterMoistureLevel.setText(hydrationValue+"%");
+        waterMoistureLevel.setText(hydrationValue + "%");
 
     }
 
@@ -121,6 +130,18 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.dispatchTouchEvent(event);
     }
+
+    // Definisci un handler nella MainActivity
+    private final Handler handler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == 1) {
+                int newValue = msg.arg1;
+                soilProgress.setProgress(newValue);
+                waterMoistureLevel.setText(newValue + "%");
+            }
+        }
+    };
 
 
 }

@@ -4,8 +4,9 @@ import static android.content.Context.MODE_PRIVATE;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
-import android.widget.SeekBar;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,11 +33,13 @@ public class UdpListener extends Thread {
     private volatile boolean running = true;
     private Thread daemonThread;
 
-    private final String listenAddress = "0.0.0.0";
+    private final String listenAddress = "192.168.8.255";
     private final int port = 1235;
+    private final Handler handler;
 
-    public UdpListener(Context context) {
+    public UdpListener( Handler handler) {
         this.context = context.getApplicationContext(); // Usa il context globale
+        this.handler = handler;
     }
 
     public void stopListening() {
@@ -82,17 +85,22 @@ public class UdpListener extends Thread {
 
                             // Stampe per debug
 //                            Log.d(TAG, "Parsed JSON: " + json.toString());
-//                            Log.d(TAG, "Thing ID: " + data.get("thing_id"));
-//                            Log.d(TAG, "Soil Moisture: " + values.get("soil_moisture"));
+//                            Log.d(TAG, "Thing ID: " + data.get("thingId"));
+//                            Log.d(TAG, "Soil Moisture: " + values.get("soilMoisture"));
 
                             Gson gson = new Gson();
                             if (data.get("sensorType").equals("Soil Moisture")) {
                                 MoistureSensor sensor = gson.fromJson(message, MoistureSensor.class);
                                 gardenModel.aggiungiSensore(sensor);
 
-                                SharedPreferences prefs = getSharedPreferences("PlantPrefs", MODE_PRIVATE);
-                                if(sensor.values.humidity < prefs.getInt("threshold", 20))
-                                    BubbleNotificationManager.getInstance(context).plantNotification(gardenModel.getPiantinaBySensor(sensor.thingId));
+
+                                Log.d(TAG, "Soil Moisture: " + sensor.values.soilMoisture);
+                                Message msg = handler.obtainMessage(1, (int) sensor.values.soilMoisture, 0);
+                                handler.sendMessage(msg);
+
+//                                SharedPreferences prefs = context.getSharedPreferences("PlantPrefs", MODE_PRIVATE);
+//                                if(sensor.values.soilMoisture < prefs.getInt("threshold", 20))
+//                                    BubbleNotificationManager.getInstance(context).plantNotification(gardenModel.getPiantinaBySensor(sensor.thingId));
 
                             }
 
